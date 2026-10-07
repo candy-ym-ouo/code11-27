@@ -13,8 +13,8 @@ import { ShareDialog } from '../share/ShareDialog';
 import { VersionDialog } from './VersionDialog';
 import { CATEGORY_ICONS, CATEGORY_LABELS, STATUS_LABELS, VISIBILITY_LABELS } from '../../lib/constants';
 import { formatBytes, formatDateTime } from '../../lib/format';
-import { mediaSrc } from '../../lib/media';
 import type { ItemDetail } from '../../api/types';
+import { MediaLink } from '../../components/MediaLink';
 
 export function ItemDetailPage() {
   const { fid, itemId } = useParams<{ fid: string; itemId: string }>();
@@ -184,12 +184,17 @@ export function ItemDetailPage() {
                     <span aria-hidden="true">📄</span>
                     <span className="upload-item__name">{m.caption || m.originalName}</span>
                     <span className="muted">{formatBytes(m.byteSize)}</span>
-                    <a className="btn btn--sm" href={mediaSrc(m.rawUrl)} target="_blank" rel="noreferrer">
+                    <MediaLink
+                      className="btn btn--sm"
+                      url={m.rawUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       打开
-                    </a>
-                    <a className="btn btn--sm" href={mediaSrc(m.rawUrl)} download={m.originalName}>
+                    </MediaLink>
+                    <MediaLink className="btn btn--sm" url={m.rawUrl} download={m.originalName}>
                       下载
-                    </a>
+                    </MediaLink>
                   </div>
                 ))}
               </div>

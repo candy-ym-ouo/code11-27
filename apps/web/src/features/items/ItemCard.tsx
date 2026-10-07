@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Item } from '../../api/types';
 import { CATEGORY_ICONS, CATEGORY_LABELS, STATUS_LABELS } from '../../lib/constants';
-import { mediaSrc } from '../../lib/media';
+import { AuthImage } from '../../components/AuthImage';
 import { Tag } from '../../components/ui';
 
 export function ItemCard({ item, fid }: { item: Item; fid: string }) {
@@ -11,11 +11,12 @@ export function ItemCard({ item, fid }: { item: Item; fid: string }) {
   return (
     <Link to={`/f/${fid}/items/${item.id}`} className="item-card">
       <div className="item-card__thumb">
-        {cover?.thumbUrl ? (
-          <img src={mediaSrc(cover.thumbUrl)} alt="" loading="lazy" />
-        ) : (
-          <span aria-hidden="true">{CATEGORY_ICONS[item.category]}</span>
-        )}
+        <AuthImage
+          src={cover?.thumbUrl}
+          fallback={<span aria-hidden="true">{CATEGORY_ICONS[item.category]}</span>}
+          alt=""
+          loading="lazy"
+        />
       </div>
       <div className="item-card__body">
         <span className="item-card__title">{item.title}</span>

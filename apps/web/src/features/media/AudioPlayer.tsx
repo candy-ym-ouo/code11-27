@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchWaveform, mediaSrc } from '../../lib/media';
+import { fetchWaveform, useAuthedMediaSrc } from '../../lib/media';
 import { formatDuration } from '../../lib/format';
 import type { Media } from '../../api/types';
 import { Button, Tag } from '../../components/ui';
@@ -15,6 +15,15 @@ export function AudioPlayer({ media }: { media: Media }) {
   const [duration, setDuration] = useState((media.durationMs ?? 0) / 1000);
   const [rate, setRate] = useState(1);
   const [showTranscript, setShowTranscript] = useState(false);
+
+  const { src: audioSrc, onError: onAudioError } = useAuthedMediaSrc(media.rawUrl);
+
+  // 续期后 src 变化：<audio> 通常会自动重新请求，这里再兜底 load() 一次
+  useEffect(() => {
+    audioRef.current?.load();
+    // 仅在登录态地址变化时触发，初始挂载无需重复 load
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioSrc]);
 
   const waveform = useQuery({
     queryKey: ['waveform', media.id],
@@ -103,9 +112,10 @@ export function AudioPlayer({ media }: { media: Media }) {
 
       <audio
         ref={audioRef}
-        src={mediaSrc(media.rawUrl)}
+        src={audioSrc}
         preload="metadata"
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onError={onAudioError}
         onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
         onEnded={() => setPlaying(false)}
       />

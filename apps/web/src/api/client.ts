@@ -14,6 +14,8 @@ export class ApiError extends Error {
 
 let accessToken: string | null = null;
 let refreshHandler: (() => Promise<boolean>) | null = null;
+/** 进行中的续期请求：多个 401 并发时共享同一次刷新，避免 refresh token 被重复轮换。 */
+let refreshInFlight: Promise<boolean> | null = null;
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
@@ -26,6 +28,24 @@ export function getAccessToken(): string | null {
 /** 由 AuthProvider 注册：401 时静默续期一次，失败再跳登录页。 */
 export function setRefreshHandler(handler: () => Promise<boolean>): void {
   refreshHandler = handler;
+}
+
+/**
+ * 触发一次静默续期；并发调用会合并成同一个请求。
+ * 媒体标签（<img>/<audio>）遇到过期令牌时也走这里恢复。
+ */
+export function refreshAccessToken(): Promise<boolean> {
+  if (!refreshHandler) return Promise.resolve(false);
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        return await refreshHandler!();
+      } finally {
+        refreshInFlight = null;
+      }
+    })();
+  }
+  return refreshInFlight;
 }
 
 function cookie(name: string): string | null {
@@ -69,7 +89,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   });
 
   if (res.status === 401 && !options.skipRetry && refreshHandler) {
-    const refreshed = await refreshHandler();
+    const refreshed = await refreshAccessToken();
     if (refreshed) return api<T>(path, { ...options, skipRetry: true });
   }
 

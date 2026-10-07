@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { mediaSrc } from '../../lib/media';
+import { AuthImage } from '../../components/AuthImage';
 import type { Media } from '../../api/types';
 
 export function ImageGallery({ media }: { media: Media[] }) {
@@ -18,17 +18,20 @@ export function ImageGallery({ media }: { media: Media[] }) {
             onClick={() => setZoomed(m)}
             aria-label={`查看大图：${m.caption || m.originalName}`}
           >
-            <img src={mediaSrc(m.thumbUrl ?? m.rawUrl)} alt={m.caption || m.originalName} loading="lazy" />
+            <AuthImage
+              src={m.thumbUrl ?? m.rawUrl}
+              alt={m.caption || m.originalName}
+              loading="lazy"
+            />
             {m.caption ? <span className="gallery__caption">{m.caption}</span> : null}
           </button>
         ))}
       </div>
       {zoomed ? (
         <div className="lightbox" onClick={() => setZoomed(null)} role="presentation">
-          <img src={mediaSrc(zoomed.rawUrl)} alt={zoomed.caption || zoomed.originalName} />
+          <AuthImage src={zoomed.rawUrl} alt={zoomed.caption || zoomed.originalName} />
         </div>
       ) : null}
     </>
   );
 }
-

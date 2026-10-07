@@ -1,8 +1,8 @@
 import { api } from '../../api/client';
-import { mediaSrc } from '../../lib/media';
 import { MEDIA_KIND_LABELS } from '../../lib/constants';
 import { formatBytes } from '../../lib/format';
 import type { Media } from '../../api/types';
+import { AuthImage } from '../../components/AuthImage';
 import { Button, Tag } from '../../components/ui';
 import { useToast } from '../../components/Toast';
 
@@ -29,8 +29,13 @@ export function MediaStrip({
       {media.map((m) => (
         <div key={m.id} className="media-tile">
           <div className="media-tile__preview">
-            {m.kind === 'image' && m.thumbUrl ? (
-              <img src={mediaSrc(m.thumbUrl)} alt={m.caption || m.originalName} loading="lazy" />
+            {m.kind === 'image' ? (
+              <AuthImage
+                src={m.thumbUrl}
+                fallback={<span aria-hidden="true">🖼️</span>}
+                alt={m.caption || m.originalName}
+                loading="lazy"
+              />
             ) : (
               <span aria-hidden="true">{m.kind === 'audio' ? '🎙️' : m.kind === 'document' ? '📄' : '🖼️'}</span>
             )}

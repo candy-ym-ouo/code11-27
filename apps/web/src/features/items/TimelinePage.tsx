@@ -1,9 +1,9 @@
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../api/client';
+import { AuthImage } from '../../components/AuthImage';
 import { EmptyState, Spinner, Tag } from '../../components/ui';
 import { CATEGORY_ICONS } from '../../lib/constants';
-import { mediaSrc } from '../../lib/media';
 import type { TimelineGroup } from '../../api/types';
 
 export function TimelinePage() {
@@ -49,13 +49,17 @@ export function TimelinePage() {
                   const cover = item.media.find((m) => m.thumbUrl);
                   return (
                     <Link key={item.id} to={`/f/${fid}/items/${item.id}`} className="timeline-row">
-                      {cover?.thumbUrl ? (
-                        <img className="timeline-row__thumb" src={mediaSrc(cover.thumbUrl)} alt="" loading="lazy" />
-                      ) : (
-                        <span className="timeline-row__thumb" aria-hidden="true">
-                          {CATEGORY_ICONS[item.category]}
-                        </span>
-                      )}
+                      <AuthImage
+                        className="timeline-row__thumb"
+                        src={cover?.thumbUrl}
+                        fallback={
+                          <span className="timeline-row__thumb" aria-hidden="true">
+                            {CATEGORY_ICONS[item.category]}
+                          </span>
+                        }
+                        alt=""
+                        loading="lazy"
+                      />
                       <div className="timeline-row__body">
                         <div className="timeline-row__title">{item.title}</div>
                         <div className="item-card__meta">
