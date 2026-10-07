@@ -14,18 +14,39 @@ export class ApiError extends Error {
 
 let accessToken: string | null = null;
 let refreshHandler: (() => Promise<boolean>) | null = null;
+let inflightRefresh: Promise<boolean> | null = null;
+const tokenListeners = new Set<(token: string | null) => void>();
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
+  tokenListeners.forEach((listener) => listener(token));
 }
 
 export function getAccessToken(): string | null {
   return accessToken;
 }
 
+/** 订阅 access token 变化（刷新成功、登出都会触发），供 <img> 等重算带凭证的地址。 */
+export function subscribeAccessToken(listener: (token: string | null) => void): () => void {
+  tokenListeners.add(listener);
+  return () => {
+    tokenListeners.delete(listener);
+  };
+}
+
 /** 由 AuthProvider 注册：401 时静默续期一次，失败再跳登录页。 */
 export function setRefreshHandler(handler: () => Promise<boolean>): void {
   refreshHandler = handler;
+}
+
+/**
+ * 供 <img>/<audio> 这类无法设置 Authorization 头的元素在收到 401 后调用。
+ * 并发失败共享同一次刷新，避免一屏缩略图同时过期时打出一串 /auth/refresh。
+ */
+export function refreshAccessToken(): Promise<boolean> {
+  if (!refreshHandler) return Promise.resolve(false);
+  if (!inflightRefresh) inflightRefresh = refreshHandler().finally(() => (inflightRefresh = null));
+  return inflightRefresh;
 }
 
 function cookie(name: string): string | null {
@@ -69,7 +90,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   });
 
   if (res.status === 401 && !options.skipRetry && refreshHandler) {
-    const refreshed = await refreshHandler();
+    const refreshed = await refreshAccessToken();
     if (refreshed) return api<T>(path, { ...options, skipRetry: true });
   }
 

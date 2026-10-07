@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Item } from '../../api/types';
 import { CATEGORY_ICONS, CATEGORY_LABELS, STATUS_LABELS } from '../../lib/constants';
-import { mediaSrc } from '../../lib/media';
+import { MediaImage } from '../../components/MediaImage';
 import { Tag } from '../../components/ui';
 
 export function ItemCard({ item, fid }: { item: Item; fid: string }) {
@@ -12,7 +12,7 @@ export function ItemCard({ item, fid }: { item: Item; fid: string }) {
     <Link to={`/f/${fid}/items/${item.id}`} className="item-card">
       <div className="item-card__thumb">
         {cover?.thumbUrl ? (
-          <img src={mediaSrc(cover.thumbUrl)} alt="" loading="lazy" />
+          <MediaImage url={cover.thumbUrl} alt="" loading="lazy" />
         ) : (
           <span aria-hidden="true">{CATEGORY_ICONS[item.category]}</span>
         )}

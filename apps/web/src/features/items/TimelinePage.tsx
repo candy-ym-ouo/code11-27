@@ -2,8 +2,8 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../api/client';
 import { EmptyState, Spinner, Tag } from '../../components/ui';
+import { MediaImage } from '../../components/MediaImage';
 import { CATEGORY_ICONS } from '../../lib/constants';
-import { mediaSrc } from '../../lib/media';
 import type { TimelineGroup } from '../../api/types';
 
 export function TimelinePage() {
@@ -50,7 +50,7 @@ export function TimelinePage() {
                   return (
                     <Link key={item.id} to={`/f/${fid}/items/${item.id}`} className="timeline-row">
                       {cover?.thumbUrl ? (
-                        <img className="timeline-row__thumb" src={mediaSrc(cover.thumbUrl)} alt="" loading="lazy" />
+                        <MediaImage className="timeline-row__thumb" url={cover.thumbUrl} alt="" loading="lazy" />
                       ) : (
                         <span className="timeline-row__thumb" aria-hidden="true">
                           {CATEGORY_ICONS[item.category]}

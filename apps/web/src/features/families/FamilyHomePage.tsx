@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../api/client';
 import { Button, EmptyState, Spinner, Tag } from '../../components/ui';
+import { MediaImage } from '../../components/MediaImage';
 import { useFamily } from './useFamily';
 import { CATEGORY_ICONS, CATEGORY_LABELS } from '../../lib/constants';
 import { formatBytes, formatNumber, relativeTime } from '../../lib/format';
@@ -99,29 +100,32 @@ export function FamilyHomePage() {
           <Spinner />
         ) : recent.data && recent.data.items.length > 0 ? (
           <div className="grid-cards">
-            {recent.data.items.map((item) => (
-              <Link key={item.id} to={`/f/${fid}/items/${item.id}`} className="item-card">
-                <div className="item-card__thumb">
-                  {item.media.find((m) => m.thumbUrl)?.thumbUrl ? (
-                    <img src={item.media.find((m) => m.thumbUrl)!.thumbUrl!} alt="" loading="lazy" />
-                  ) : (
-                    <span aria-hidden="true">{CATEGORY_ICONS[item.category]}</span>
-                  )}
-                </div>
-                <div className="item-card__body">
-                  <span className="item-card__title">{item.title}</span>
-                  <div className="item-card__meta">
-                    <span>{item.acquiredDisplay}</span>
-                    {item.timeUncertain ? <Tag tone="warn">时间存疑</Tag> : null}
+            {recent.data.items.map((item) => {
+              const cover = item.media.find((m) => m.thumbUrl);
+              return (
+                <Link key={item.id} to={`/f/${fid}/items/${item.id}`} className="item-card">
+                  <div className="item-card__thumb">
+                    {cover?.thumbUrl ? (
+                      <MediaImage url={cover.thumbUrl} alt="" loading="lazy" />
+                    ) : (
+                      <span aria-hidden="true">{CATEGORY_ICONS[item.category]}</span>
+                    )}
                   </div>
-                  <div className="item-card__foot">
-                    <span className="muted" style={{ fontSize: 12 }}>
-                      {relativeTime(item.updatedAt)}更新
-                    </span>
+                  <div className="item-card__body">
+                    <span className="item-card__title">{item.title}</span>
+                    <div className="item-card__meta">
+                      <span>{item.acquiredDisplay}</span>
+                      {item.timeUncertain ? <Tag tone="warn">时间存疑</Tag> : null}
+                    </div>
+                    <div className="item-card__foot">
+                      <span className="muted" style={{ fontSize: 12 }}>
+                        {relativeTime(item.updatedAt)}更新
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <EmptyState

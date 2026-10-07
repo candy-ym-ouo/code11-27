@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, ApiError } from '../../api/client';
+import { api, ApiError, getAccessToken } from '../../api/client';
 import { Button, EmptyState, Spinner, Tag } from '../../components/ui';
 import { useToast } from '../../components/Toast';
 import { ImageGallery } from '../media/ImageGallery';
@@ -13,8 +13,45 @@ import { ShareDialog } from '../share/ShareDialog';
 import { VersionDialog } from './VersionDialog';
 import { CATEGORY_ICONS, CATEGORY_LABELS, STATUS_LABELS, VISIBILITY_LABELS } from '../../lib/constants';
 import { formatBytes, formatDateTime } from '../../lib/format';
-import { mediaSrc } from '../../lib/media';
-import type { ItemDetail } from '../../api/types';
+import { mediaSrc, recoverMediaAuth, useMediaSrc } from '../../lib/media';
+import type { Media, ItemDetail } from '../../api/types';
+
+/**
+ * 文件「打开/下载」链接：href 始终带当前令牌；页面闲置超过 15 分钟后点击时，
+ * 内存里的令牌可能已过期，先静默续期拿到新凭证再跳转，避免落地一个 401。
+ */
+function MediaFileLink({ media, download }: { media: Media; download?: boolean }) {
+  const href = useMediaSrc(media.rawUrl);
+
+  const ensureFresh = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    if (getAccessToken()) await recoverMediaAuth();
+    const url = mediaSrc(media.rawUrl);
+    if (!url) return;
+    if (download) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = media.originalName;
+      a.click();
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  return (
+    <a
+      className="btn btn--sm"
+      href={href}
+      download={download ? media.originalName : undefined}
+      target={download ? undefined : '_blank'}
+      rel={download ? undefined : 'noreferrer'}
+      onClick={ensureFresh}
+    >
+      {download ? '下载' : '打开'}
+    </a>
+  );
+}
 
 export function ItemDetailPage() {
   const { fid, itemId } = useParams<{ fid: string; itemId: string }>();
@@ -184,12 +221,8 @@ export function ItemDetailPage() {
                     <span aria-hidden="true">📄</span>
                     <span className="upload-item__name">{m.caption || m.originalName}</span>
                     <span className="muted">{formatBytes(m.byteSize)}</span>
-                    <a className="btn btn--sm" href={mediaSrc(m.rawUrl)} target="_blank" rel="noreferrer">
-                      打开
-                    </a>
-                    <a className="btn btn--sm" href={mediaSrc(m.rawUrl)} download={m.originalName}>
-                      下载
-                    </a>
+                    <MediaFileLink media={m} />
+                    <MediaFileLink media={m} download />
                   </div>
                 ))}
               </div>

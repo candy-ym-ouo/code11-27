@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchWaveform, mediaSrc } from '../../lib/media';
+import { getAccessToken, subscribeAccessToken } from '../../api/client';
+import { fetchWaveform, isProtectedMediaUrl, recoverMediaAuth, useMediaSrc } from '../../lib/media';
 import { formatDuration } from '../../lib/format';
 import type { Media } from '../../api/types';
 import { Button, Tag } from '../../components/ui';
@@ -22,6 +23,15 @@ export function AudioPlayer({ media }: { media: Media }) {
     enabled: Boolean(media.waveformUrl),
     staleTime: Infinity,
   });
+
+  const token = useSyncExternalStore(subscribeAccessToken, getAccessToken);
+  const src = useMediaSrc(media.rawUrl);
+  // 受保护音频在登录态恢复前不挂 src，避免无凭证请求；公开分享的音频地址匿名可读
+  const audioSrc = isProtectedMediaUrl(media.rawUrl) && token === null ? undefined : src;
+  const triedFor = useRef<string | null>(null);
+  useEffect(() => {
+    triedFor.current = null;
+  }, [media.rawUrl]);
 
   // 波形与进度绘制：已播放部分用主色，未播放部分用浅色
   useEffect(() => {
@@ -103,8 +113,14 @@ export function AudioPlayer({ media }: { media: Media }) {
 
       <audio
         ref={audioRef}
-        src={mediaSrc(media.rawUrl)}
+        src={audioSrc}
         preload="metadata"
+        onError={() => {
+          // query 里的 access token 过期时播放/预加载会失败，静默续期一次，src 会自动换成新地址
+          if (triedFor.current === media.rawUrl || !audioSrc) return;
+          triedFor.current = media.rawUrl;
+          void recoverMediaAuth();
+        }}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
         onEnded={() => setPlaying(false)}

@@ -1,9 +1,9 @@
 import { api } from '../../api/client';
-import { mediaSrc } from '../../lib/media';
 import { MEDIA_KIND_LABELS } from '../../lib/constants';
 import { formatBytes } from '../../lib/format';
 import type { Media } from '../../api/types';
 import { Button, Tag } from '../../components/ui';
+import { MediaImage } from '../../components/MediaImage';
 import { useToast } from '../../components/Toast';
 
 /** 表单里的媒体清单：可以设封面、填说明、删除。 */
@@ -30,7 +30,7 @@ export function MediaStrip({
         <div key={m.id} className="media-tile">
           <div className="media-tile__preview">
             {m.kind === 'image' && m.thumbUrl ? (
-              <img src={mediaSrc(m.thumbUrl)} alt={m.caption || m.originalName} loading="lazy" />
+              <MediaImage url={m.thumbUrl} alt={m.caption || m.originalName} loading="lazy" />
             ) : (
               <span aria-hidden="true">{m.kind === 'audio' ? '🎙️' : m.kind === 'document' ? '📄' : '🖼️'}</span>
             )}
